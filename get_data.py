@@ -2,10 +2,9 @@ import json
 import pandas as pd
 import re
 import requests
+import sys
 
 from bs4 import BeautifulSoup
-
-SEARCH_URL = 'https://www.hemnet.se/salda/bostader?housing_form_groups%%5B%%5D=apartments&location_ids%%5B%%5D=925958&page=%d'
 
 def extract_listing_links_from_search_results(search_url):
     index = 1
@@ -29,15 +28,8 @@ def extract_listing_links_from_search_results(search_url):
 def get_listing_link(listing):
     return listing.find('a').attrs['href']
 
-def search_result_to_tuple(l):
-    price = digits(l.find('span', {'class': 'sold-property-listing__subheading'}).text)
-    ppm2  = digits(l.find('div', {'class': 'sold-property-listing__price-per-m2'}).text)
-    fee   = digits(l.find('div', {'class': 'sold-property-listing__fee'}).text)
-    date  = l.find('div', {'class': 'sold-property-listing__sold-date'}).text
-    link = l.find('a').attrs['href']
-    return (price, ppm2, fee, date, link)
-
 def json_from_full_listing(listing_url):
+    print(f'fetching {listing_url}...')
     resp    = requests.get(listing_url)
     soup    = BeautifulSoup(resp.text, 'html.parser')
     script  = [s for s in soup.body('script') if s.string is not None and 'dataLayer' in s.string][0]
@@ -48,12 +40,20 @@ def json_from_full_listing(listing_url):
     listing['link'] = listing_url
     return pd.json_normalize(listing).to_dict(orient='records')[0]
 
-def digits(string):
-    return ''.join(filter(str.isdecimal, string))
+if __name__ == '__main__':
+    search_url   = sys.argv[1]
+    urls_out     = sys.argv[2]
+    results_out  = sys.argv[3]
+    listing_urls = extract_listing_links_from_search_results(search_url)
+    with open(urls_out, 'w') as f:
+        f.write('\n'.join(listing_urls))
 
-# url = 'https://www.hemnet.se/salda/bostader?housing_form_groups%5B%5D=apartments&location_ids%5B%5D=925958&page=1'
-# response = requests.get(url)
-# soup = BeautifulSoup(response.text, "html.parser")
-# listings = soup.find_all('div', {'class': 'sold-property-listing'})
-# links = [get_listing_link(l) for l in listings]
-# table = [listing_html_to_tuple(l) for l in listings]
+    results = []
+    for listing_url in listing_urls:
+        try:
+            results.append(json_from_full_listing(listing_url))
+        except Exception as e:
+            print(e)
+            continue
+    df = pd.DataFrame(results)
+    df.to_csv(results_out, index=False)
