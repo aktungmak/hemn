@@ -21,11 +21,11 @@ def extract_listing_links_from_search_results(search_url):
         if len(ls) == 0:
             print('stopping extraction due to empty results page')
             break
-        links.extend([get_listing_link(l) for l in ls])
+        links.extend([listing_link(l) for l in ls])
         index += 1
-    return links
+    return list(set(links))
 
-def get_listing_link(listing):
+def listing_link(listing):
     return listing.find('a').attrs['href']
 
 def json_from_full_listing(listing_url):
@@ -40,20 +40,39 @@ def json_from_full_listing(listing_url):
     listing['link'] = listing_url
     return pd.json_normalize(listing).to_dict(orient='records')[0]
 
-if __name__ == '__main__':
-    search_url   = sys.argv[1]
-    urls_out     = sys.argv[2]
-    results_out  = sys.argv[3]
-    listing_urls = extract_listing_links_from_search_results(search_url)
-    with open(urls_out, 'w') as f:
-        f.write('\n'.join(listing_urls))
+def address_to_lat_long(street_address, city):
+    address = street_address.split(',')[0] + ', ' + city + ', Stockholm'
+    url     = f'https://api.opencagedata.com/geocode/v1/json?q={address}&key=d0fdad792afd495ca1dab0282d9c989f'
+    try:
+        resp = requests.get(url, headers={'User-Agent': 'Agent'}).json()
+        lat  = (resp['results'][0]['bounds']['northeast']['lat'] +
+                resp['results'][0]['bounds']['southwest']['lat']) / 2
+        lon  = (resp['results'][0]['bounds']['northeast']['lng'] +
+                resp['results'][0]['bounds']['southwest']['lng']) / 2
+    except Exception as e:
+        print(f'failed to find {address}: {e}')
+        return None, None
+    return lat, lon
 
-    results = []
+def main(search_url, prev_file, results_outfile):
+    df           = pd.read_csv(prev_file)
+    listing_urls = extract_listing_links_from_search_results(search_url)
     for listing_url in listing_urls:
+        if listing_url in df.link.values:
+            print(f'skipping {listing_url} since already retrieved')
+            continue
         try:
-            results.append(json_from_full_listing(listing_url))
+            listing_json = json_from_full_listing(listing_url)
+            lat, lon     = address_to_lat_long(listing_json['street_address'])
+            df           = df.append(listing_json, ignore_index=True)
         except Exception as e:
             print(e)
             continue
-    df = pd.DataFrame(results)
-    df.to_csv(results_out, index=False)
+    df.to_csv(results_outfile, index=False)
+    return df
+
+#if __name__ == '__main__':
+#    search_url      = sys.argv[1]
+#    prev_file       = sys.argv[2]
+#    results_outfile = sys.argv[3]
+#    main(search_url, prev_file, results_outfile)

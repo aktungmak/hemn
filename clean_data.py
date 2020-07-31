@@ -1,6 +1,9 @@
 import pandas as pd
 import sys
 
+# the centre of stockholm
+clat, clon = 59.329444, 18.068611
+
 def clean_data(filename):
     df = pd.read_csv(filename)
     df = df.drop(columns=['locations.country', 'locations.city',
@@ -16,6 +19,9 @@ def clean_data(filename):
     df.price                     = df.price.astype('int64')
     df['locations.municipality'] = df['locations.municipality'].astype('category')
     df['locations.postal_city']  = df['locations.postal_city'].astype('category')
+    # clean up street name
+    # get lat/lng again if seems incorrect
+    df['dist_from_centre'] = np.sqrt(np.square(clat - df.lat) + np.square(clon - df.lon))
 
     df['sppm2']      = df.selling_price / df.living_area
     df['bid_factor'] = df.selling_price / df.price
