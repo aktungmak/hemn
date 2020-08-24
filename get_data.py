@@ -54,8 +54,11 @@ def address_to_lat_long(street_address, city):
         return None, None
     return lat, lon
 
-def main(search_url, prev_file, results_outfile):
-    df           = pd.read_csv(prev_file)
+def main(search_url, results_outfile, prev_file=None):
+    if prev_file:
+        df = pd.read_csv(prev_file)
+    else:
+        df = pd.DataFrame({'link':[]})
     listing_urls = extract_listing_links_from_search_results(search_url)
     for listing_url in listing_urls:
         if listing_url in df.link.values:
@@ -63,7 +66,10 @@ def main(search_url, prev_file, results_outfile):
             continue
         try:
             listing_json = json_from_full_listing(listing_url)
-            lat, lon     = address_to_lat_long(listing_json['street_address'])
+            lat, lon     = address_to_lat_long(listing_json['street_address'],
+                                               listing_json['location'])
+            listing_json['lat'] = lat
+            listing_json['lon'] = lon
             df           = df.append(listing_json, ignore_index=True)
         except Exception as e:
             print(e)
@@ -71,8 +77,8 @@ def main(search_url, prev_file, results_outfile):
     df.to_csv(results_outfile, index=False)
     return df
 
-#if __name__ == '__main__':
-#    search_url      = sys.argv[1]
-#    prev_file       = sys.argv[2]
-#    results_outfile = sys.argv[3]
-#    main(search_url, prev_file, results_outfile)
+if __name__ == '__main__':
+    search_url      = sys.argv[1]
+    prev_file       = sys.argv[2]
+    results_outfile = sys.argv[3]
+    main(search_url, prev_file, results_outfile)

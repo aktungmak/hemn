@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import sys
 
 # the centre of stockholm
@@ -17,6 +18,7 @@ def clean_data(filename):
 
     df.sold_at_date              = pd.to_datetime(df.sold_at_date)
     df.price                     = df.price.astype('int64')
+    df.broker_agency             = df.broker_agency.astype('category')
     df['locations.municipality'] = df['locations.municipality'].astype('category')
     df['locations.postal_city']  = df['locations.postal_city'].astype('category')
     # clean up street name
