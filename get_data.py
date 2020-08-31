@@ -35,8 +35,8 @@ def json_from_full_listing(listing_url):
     script  = [s for s in soup.body('script') if s.string is not None and 'dataLayer' in s.string][0]
     match   = re.search('dataLayer = (.*);', script.string)
     jsonstr = match.groups()[0]
-    dicts   = json.loads(jsonstr)
-    listing = dicts[-1]['sold_property']
+    last    = json.loads(jsonstr)[-1]
+    listing = {**last.get('property', {}), **last.get('sold_property', {})}
     listing['link'] = listing_url
     return pd.json_normalize(listing).to_dict(orient='records')[0]
 
