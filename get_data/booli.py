@@ -8,14 +8,21 @@ import time
 
 from bs4 import BeautifulSoup
 
-def get_all_sold_in_area(area_id, object_type='Lägenhet'):
-    host = 'https://booli.se'
-    page = 1
+def get_all_sold(area_id,
+                 max_sold_price=6000000,
+                 rooms=[2,3,4],
+                 object_type='Lägenhet',
+                 start_page=1):
+    url     = f'https://booli.se/slutpriser/{area_id}.json'
+    params  = {'maxSoldPrice': max_sold_price,
+               'rooms': ','.join(map(str, rooms)),
+               'objectType': object_type,
+               'page': start_page}
+    headers = {'User-Agent': 'Agent'}
     results = []
     while True:
-        url  = f'/slutpriser/{area_id}.json?objectType={object_type}&page={page}'
-        print(f'fetching {url}...')
-        resp = requests.get(host + url, headers={'User-Agent': 'Agent'})
+        print(f'fetching page {params["page"]}...')
+        resp = requests.get(url, params=params, headers=headers)
         if resp.status_code != 200:
             print(f'stopping extraction due to status code {resp.status_code}')
             break
@@ -24,8 +31,8 @@ def get_all_sold_in_area(area_id, object_type='Lägenhet'):
             results.extend(body['soldProperties'])
         except KeyError:
             break
-        page += 1
-        time.sleep(random.randint(2, 7))
+        params['page'] += 1
+        time.sleep(random.random() * 2)
     return results
 
 
