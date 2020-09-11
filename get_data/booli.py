@@ -9,16 +9,18 @@ import time
 from bs4 import BeautifulSoup
 
 def get_all_sold(area_id,
-                 max_sold_price=6000000,
+                 max_sold_price=5000000,
                  rooms=[2,3,4],
                  object_type='Lägenhet',
+                 after_date='2020-01-01',
                  start_page=1):
     url     = f'https://booli.se/slutpriser/{area_id}.json'
     params  = {'maxSoldPrice': max_sold_price,
+               'minSoldDate': after_date,
                'rooms': ','.join(map(str, rooms)),
                'objectType': object_type,
                'page': start_page}
-    headers = {'User-Agent': 'Agent'}
+    headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:80.0) Gecko/20100101 Firefox/80.0'}
     results = []
     while True:
         print(f'fetching page {params["page"]}...')
@@ -32,21 +34,17 @@ def get_all_sold(area_id,
         except KeyError:
             break
         params['page'] += 1
-        time.sleep(random.random() * 2)
+        time.sleep(1 + random.random() * 5)
     return results
 
 
-def main(area_id, results_outfile, prev_file=None):
-    if prev_file:
-        df = pd.read_csv(prev_file)
-    else:
-        df = pd.DataFrame()
-    # TODO
-    df.to_csv(results_outfile, index=False)
+def main(area_id, outfile):
+    results = get_all_sold(area_id)
+    df = pd.json_normalize(results, sep='_')
+    df.to_csv(outfile, index=False)
     return df
 
 if __name__ == '__main__':
-    area_id         = sys.argv[1]
-    results_outfile = sys.argv[2]
-    prev_file       = sys.argv[3]
-    main(area_id, prev_file, results_outfile)
+    area_id = sys.argv[1]
+    outfile = sys.argv[2]
+    main(area_id, outfile)
