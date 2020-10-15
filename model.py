@@ -27,11 +27,11 @@ def train_and_score_model(model, df, predictors, response, random_state=1, degre
     train, test = train_test_split(df, test_size=0.2, random_state=random_state)
 
     train_X = train.loc[:, predictors]
-    train_X = poly.fit_transform(train_X)
+#   train_X = poly.fit_transform(train_X)
     train_y = train[response]
 
     test_X = test.loc[:, predictors]
-    test_X = poly.fit_transform(test_X)
+#   test_X = poly.fit_transform(test_X)
     test_y = test[response]
 
     model.fit(train_X, train_y)
