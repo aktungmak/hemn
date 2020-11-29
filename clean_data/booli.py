@@ -20,6 +20,8 @@ def clean_csvs(filename_glob):
 
 
 def clean_data(df, drop_list_price=False):
+    df = df.drop_duplicates(subset="booliId")
+
     cols_to_keep = [
         "daysActive_raw",
         "descriptiveAreaName",

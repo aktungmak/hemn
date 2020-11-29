@@ -43,7 +43,7 @@ def get_all_sold(
         except KeyError:
             break
         params["page"] += 1
-        time.sleep(1 + random.random() * 5)
+        time.sleep(1 + random.random() * 20)
     return results
 
 
