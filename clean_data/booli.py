@@ -46,7 +46,7 @@ def clean_data(df, drop_list_price=False):
         df.drop(columns="listPrice")
     else:
         df.listPrice = df.listPrice.fillna(df.soldPrice)
-        df["bid_factor"] = df.listPrice / df.soldPrice
+        df["bid_factor"] = df.soldPrice / df.listPrice
 
     df.soldDate = pd.to_datetime(df.soldDate)
     df["dist_from_centre"] = np.sqrt(
