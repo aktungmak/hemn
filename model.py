@@ -3,26 +3,40 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import PolynomialFeatures
 
 
-def model_with_price(model, df):
+def with_list_price(model, df):
     predictors = ["livingArea", "listPrice", "rooms", "floor", "dist_from_centre"]
     response = "soldPrice"
     return train_and_score_model(model, df, predictors, response)
 
 
-def model_with_price_lat_lon(model, df):
+def with_list_price_lat_lon(model, df):
     predictors = ["livingArea", "listPrice", "rooms", "floor", "latitude", "longitude"]
     response = "soldPrice"
     return train_and_score_model(model, df, predictors, response)
 
 
-def model_without_price(model, df, degree):
-    predictors = ["living_area", "rooms", "dist_from_centre"]
+def without_list_price(model, df, degree):
+    predictors = ["livingArea", "rooms", "dist_from_centre"]
     response = "price"
     return train_and_score_model(model, df, predictors, response, degree=degree)
 
 
-def model_without_price_lat_lon(model, df, degree):
-    predictors = ["living_area", "rooms", "lat", "lon"]
+def without_list_price_lat_lon(model, df, degree):
+    predictors = ["livingArea", "rooms", "latitude", "longitude"]
+    response = "price"
+    return train_and_score_model(model, df, predictors, response, degree=degree)
+
+
+def without_list_price_all(model, df, degree):
+    predictors = [
+        "daysActive",
+        "dist_from_centre",
+        "floor",
+        "latitude",
+        "livingArea",
+        "longitude",
+        "rooms",
+    ]
     response = "price"
     return train_and_score_model(model, df, predictors, response, degree=degree)
 
@@ -41,3 +55,9 @@ def train_and_score_model(model, df, predictors, response, random_state=5, degre
 
     model.fit(train_X, train_y)
     return model.score(test_X, test_y)
+
+
+def predict(model, X, degree=3):
+    poly = PolynomialFeatures(degree)
+    X = poly.fit_transform(X)
+    return model.predict(X)
