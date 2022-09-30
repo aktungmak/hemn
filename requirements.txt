@@ -9,7 +9,7 @@ idna==2.9
 ipython==7.15.0
 ipython-genutils==0.2.0
 jedi==0.17.0
-joblib==0.16.0
+joblib==1.2.0
 kiwisolver==1.2.0
 matplotlib==3.3.0
 numpy==1.19.0
